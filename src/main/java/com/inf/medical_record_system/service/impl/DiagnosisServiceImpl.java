@@ -3,6 +3,7 @@ package com.inf.medical_record_system.service.impl;
 import com.inf.medical_record_system.data.entity.Diagnosis;
 import com.inf.medical_record_system.data.repo.DiagnosisRepository;
 import com.inf.medical_record_system.dto.DiagnosisDTO;
+import com.inf.medical_record_system.dto.DiagnosisRequestDTO;
 import com.inf.medical_record_system.exception.DuplicateResourceException;
 import com.inf.medical_record_system.exception.ResourceNotFoundException;
 import com.inf.medical_record_system.service.DiagnosisService;
@@ -34,38 +35,38 @@ public class DiagnosisServiceImpl implements DiagnosisService {
     }
 
     @Override
-    public DiagnosisDTO createDiagnosis(DiagnosisDTO diagnosisDTO) {
-        if (diagnosisRepository.existsByCode(diagnosisDTO.getCode())) {
+    public DiagnosisDTO createDiagnosis(DiagnosisRequestDTO diagnosisRequestDTO) {
+        if (diagnosisRepository.existsByCode(diagnosisRequestDTO.getCode())) {
             throw new DuplicateResourceException("Diagnosis with this code already exists");
         }
 
-        if (diagnosisRepository.existsByName(diagnosisDTO.getName())) {
+        if (diagnosisRepository.existsByName(diagnosisRequestDTO.getName())) {
             throw new DuplicateResourceException("Diagnosis with this name already exists");
         }
 
-        Diagnosis diagnosis = mapperUtil.map(diagnosisDTO, Diagnosis.class);
+        Diagnosis diagnosis = mapperUtil.map(diagnosisRequestDTO, Diagnosis.class);
         Diagnosis savedDiagnosis = diagnosisRepository.save(diagnosis);
 
         return mapperUtil.map(savedDiagnosis, DiagnosisDTO.class);
     }
 
     @Override
-    public DiagnosisDTO updateDiagnosis(Long id, DiagnosisDTO diagnosisDTO) {
+    public DiagnosisDTO updateDiagnosis(Long id, DiagnosisRequestDTO diagnosisRequestDTO) {
         Diagnosis diagnosis = findDiagnosisById(id);
 
-        if (!diagnosis.getCode().equals(diagnosisDTO.getCode())
-                && diagnosisRepository.existsByCode(diagnosisDTO.getCode())) {
+        if (!diagnosis.getCode().equals(diagnosisRequestDTO.getCode())
+                && diagnosisRepository.existsByCode(diagnosisRequestDTO.getCode())) {
             throw new DuplicateResourceException("Diagnosis with this code already exists");
         }
 
-        if (!diagnosis.getName().equals(diagnosisDTO.getName())
-                && diagnosisRepository.existsByName(diagnosisDTO.getName())) {
+        if (!diagnosis.getName().equals(diagnosisRequestDTO.getName())
+                && diagnosisRepository.existsByName(diagnosisRequestDTO.getName())) {
             throw new DuplicateResourceException("Diagnosis with this name already exists");
         }
 
-        diagnosis.setCode(diagnosisDTO.getCode());
-        diagnosis.setName(diagnosisDTO.getName());
-        diagnosis.setDescription(diagnosisDTO.getDescription());
+        diagnosis.setCode(diagnosisRequestDTO.getCode());
+        diagnosis.setName(diagnosisRequestDTO.getName());
+        diagnosis.setDescription(diagnosisRequestDTO.getDescription());
 
         Diagnosis updatedDiagnosis = diagnosisRepository.save(diagnosis);
         return mapperUtil.map(updatedDiagnosis, DiagnosisDTO.class);
