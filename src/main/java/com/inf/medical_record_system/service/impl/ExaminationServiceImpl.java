@@ -15,6 +15,7 @@ import com.inf.medical_record_system.dto.ExaminationDTO;
 import com.inf.medical_record_system.dto.ExaminationRequestDTO;
 import com.inf.medical_record_system.exception.InvalidOperationException;
 import com.inf.medical_record_system.exception.ResourceNotFoundException;
+import com.inf.medical_record_system.service.CurrentUserService;
 import com.inf.medical_record_system.service.ExaminationService;
 import com.inf.medical_record_system.service.HealthInsuranceStatusService;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class ExaminationServiceImpl implements ExaminationService {
     private final HealthInsuranceStatusService healthInsuranceStatusService;
     private final TreatmentRepository treatmentRepository;
     private final SickLeaveRepository sickLeaveRepository;
+    private final CurrentUserService currentUserService;
 
     public ExaminationServiceImpl(
             ExaminationRepository examinationRepository,
@@ -40,7 +42,8 @@ public class ExaminationServiceImpl implements ExaminationService {
             DiagnosisRepository diagnosisRepository,
             HealthInsuranceStatusService healthInsuranceStatusService,
             TreatmentRepository treatmentRepository,
-            SickLeaveRepository sickLeaveRepository
+            SickLeaveRepository sickLeaveRepository,
+            CurrentUserService currentUserService
     ) {
         this.examinationRepository = examinationRepository;
         this.doctorRepository = doctorRepository;
@@ -49,10 +52,20 @@ public class ExaminationServiceImpl implements ExaminationService {
         this.healthInsuranceStatusService = healthInsuranceStatusService;
         this.treatmentRepository = treatmentRepository;
         this.sickLeaveRepository = sickLeaveRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Override
     public List<ExaminationDTO> getAllExaminations() {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return examinationRepository.findByPatientId(currentPatientId)
+                    .stream()
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         return examinationRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
@@ -62,11 +75,21 @@ public class ExaminationServiceImpl implements ExaminationService {
     @Override
     public ExaminationDTO getExaminationById(Long id) {
         Examination examination = findExaminationById(id);
+        validateCanReadExamination(examination);
+
         return mapToDTO(examination);
     }
 
     @Override
     public List<ExaminationDTO> getExaminationsByPatient(Long patientId) {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!currentPatientId.equals(patientId)) {
+                throw new InvalidOperationException("Patients can view only their own examinations");
+            }
+        }
+
         return examinationRepository.findByPatientId(patientId)
                 .stream()
                 .map(this::mapToDTO)
@@ -75,6 +98,16 @@ public class ExaminationServiceImpl implements ExaminationService {
 
     @Override
     public List<ExaminationDTO> getExaminationsByDoctor(Long doctorId) {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return examinationRepository.findByDoctorId(doctorId)
+                    .stream()
+                    .filter(examination -> examination.getPatient().getId().equals(currentPatientId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         return examinationRepository.findByDoctorId(doctorId)
                 .stream()
                 .map(this::mapToDTO)
@@ -83,6 +116,16 @@ public class ExaminationServiceImpl implements ExaminationService {
 
     @Override
     public List<ExaminationDTO> getExaminationsByDiagnosis(Long diagnosisId) {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return examinationRepository.findByDiagnosisId(diagnosisId)
+                    .stream()
+                    .filter(examination -> examination.getPatient().getId().equals(currentPatientId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         return examinationRepository.findByDiagnosisId(diagnosisId)
                 .stream()
                 .map(this::mapToDTO)
@@ -92,6 +135,16 @@ public class ExaminationServiceImpl implements ExaminationService {
     @Override
     public List<ExaminationDTO> getExaminationsByPeriod(LocalDate startDate, LocalDate endDate) {
         validateDatePeriod(startDate, endDate);
+
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return examinationRepository.findByExaminationDateBetween(startDate, endDate)
+                    .stream()
+                    .filter(examination -> examination.getPatient().getId().equals(currentPatientId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
 
         return examinationRepository.findByExaminationDateBetween(startDate, endDate)
                 .stream()
@@ -103,6 +156,16 @@ public class ExaminationServiceImpl implements ExaminationService {
     public List<ExaminationDTO> getExaminationsByDoctorAndPeriod(Long doctorId, LocalDate startDate, LocalDate endDate) {
         validateDatePeriod(startDate, endDate);
 
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return examinationRepository.findByDoctorIdAndExaminationDateBetween(doctorId, startDate, endDate)
+                    .stream()
+                    .filter(examination -> examination.getPatient().getId().equals(currentPatientId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         return examinationRepository.findByDoctorIdAndExaminationDateBetween(doctorId, startDate, endDate)
                 .stream()
                 .map(this::mapToDTO)
@@ -111,6 +174,8 @@ public class ExaminationServiceImpl implements ExaminationService {
 
     @Override
     public ExaminationDTO createExamination(ExaminationRequestDTO requestDTO) {
+        validateCanCreateExaminationForDoctor(requestDTO.getDoctorId());
+
         Doctor doctor = findDoctorById(requestDTO.getDoctorId());
         Patient patient = findPatientById(requestDTO.getPatientId());
         Diagnosis diagnosis = findDiagnosisById(requestDTO.getDiagnosisId());
@@ -131,6 +196,9 @@ public class ExaminationServiceImpl implements ExaminationService {
     @Override
     public ExaminationDTO updateExamination(Long id, ExaminationRequestDTO requestDTO) {
         Examination examination = findExaminationById(id);
+        validateCanModifyExamination(examination);
+
+        validateCanCreateExaminationForDoctor(requestDTO.getDoctorId());
 
         Doctor doctor = findDoctorById(requestDTO.getDoctorId());
         Patient patient = findPatientById(requestDTO.getPatientId());
@@ -151,6 +219,7 @@ public class ExaminationServiceImpl implements ExaminationService {
     @Override
     public void deleteExamination(Long id) {
         Examination examination = findExaminationById(id);
+        validateCanModifyExamination(examination);
 
         if (treatmentRepository.findByExaminationId(id).isPresent()) {
             throw new InvalidOperationException("Examination cannot be deleted because it has a treatment connected to it");
@@ -161,6 +230,56 @@ public class ExaminationServiceImpl implements ExaminationService {
         }
 
         examinationRepository.delete(examination);
+    }
+
+    private void validateCanReadExamination(Examination examination) {
+        if (currentUserService.isAdmin() || currentUserService.isDoctor()) {
+            return;
+        }
+
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!examination.getPatient().getId().equals(currentPatientId)) {
+                throw new InvalidOperationException("Patients can view only their own examinations");
+            }
+        }
+    }
+
+    private void validateCanModifyExamination(Examination examination) {
+        if (currentUserService.isAdmin()) {
+            return;
+        }
+
+        if (currentUserService.isDoctor()) {
+            Long currentDoctorId = currentUserService.getCurrentDoctorId();
+
+            if (!examination.getDoctor().getId().equals(currentDoctorId)) {
+                throw new InvalidOperationException("Doctors can edit only examinations they performed");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to modify examinations");
+    }
+
+    private void validateCanCreateExaminationForDoctor(Long doctorId) {
+        if (currentUserService.isAdmin()) {
+            return;
+        }
+
+        if (currentUserService.isDoctor()) {
+            Long currentDoctorId = currentUserService.getCurrentDoctorId();
+
+            if (!currentDoctorId.equals(doctorId)) {
+                throw new InvalidOperationException("Doctors can create examinations only for themselves");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to create examinations");
     }
 
     private PaymentSource calculatePaymentSource(Long patientId, LocalDate examinationDate) {
