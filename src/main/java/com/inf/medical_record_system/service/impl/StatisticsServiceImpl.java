@@ -10,6 +10,7 @@ import com.inf.medical_record_system.data.repo.SickLeaveRepository;
 import com.inf.medical_record_system.dto.*;
 import com.inf.medical_record_system.exception.InvalidOperationException;
 import com.inf.medical_record_system.exception.ResourceNotFoundException;
+import com.inf.medical_record_system.service.CurrentUserService;
 import com.inf.medical_record_system.service.StatisticsService;
 import org.springframework.stereotype.Service;
 
@@ -24,21 +25,26 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final ExaminationRepository examinationRepository;
     private final SickLeaveRepository sickLeaveRepository;
     private final DoctorRepository doctorRepository;
+    private final CurrentUserService currentUserService;
 
     public StatisticsServiceImpl(
             PatientRepository patientRepository,
             ExaminationRepository examinationRepository,
             SickLeaveRepository sickLeaveRepository,
-            DoctorRepository doctorRepository
+            DoctorRepository doctorRepository,
+            CurrentUserService currentUserService
     ) {
         this.patientRepository = patientRepository;
         this.examinationRepository = examinationRepository;
         this.sickLeaveRepository = sickLeaveRepository;
         this.doctorRepository = doctorRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Override
     public List<PatientDTO> getPatientsByDiagnosis(Long diagnosisId) {
+        validateDoctorOrAdminAccess();
+
         return patientRepository.findPatientsByDiagnosisId(diagnosisId)
                 .stream()
                 .map(this::mapToPatientDTO)
@@ -47,6 +53,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public DiagnosisCountDTO getMostCommonDiagnosis() {
+        validateDoctorOrAdminAccess();
+
         List<Object[]> rows = examinationRepository.countExaminationsByDiagnosis();
 
         if (rows.isEmpty()) {
@@ -64,6 +72,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<PatientDTO> getPatientsByPersonalDoctor(Long doctorId) {
+        validateDoctorOrAdminAccess();
+
         return patientRepository.findByPersonalDoctorId(doctorId)
                 .stream()
                 .map(this::mapToPatientDTO)
@@ -72,12 +82,17 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public BigDecimal getTotalPatientPaidExaminationValue() {
+        validateAdminAccess();
+
         BigDecimal total = examinationRepository.calculateTotalValueByPaymentSource(PaymentSource.PATIENT);
+
         return total == null ? BigDecimal.ZERO : total;
     }
 
     @Override
     public DoctorRevenueDTO getPatientPaidExaminationValueByDoctor(Long doctorId) {
+        validateAdminAccess();
+
         var doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + doctorId));
 
@@ -95,6 +110,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<DoctorPatientCountDTO> getPatientCountByPersonalDoctor() {
+        validateAdminAccess();
+
         return patientRepository.countPatientsByPersonalDoctor()
                 .stream()
                 .map(row -> new DoctorPatientCountDTO(
@@ -107,6 +124,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<DoctorVisitCountDTO> getVisitCountByDoctor() {
+        validateDoctorOrAdminAccess();
+
         return examinationRepository.countVisitsByDoctor()
                 .stream()
                 .map(row -> new DoctorVisitCountDTO(
@@ -119,6 +138,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<ExaminationDTO> getPatientVisitHistory(Long patientId) {
+        validateDoctorOrAdminAccess();
+
         return examinationRepository.findByPatientId(patientId)
                 .stream()
                 .map(this::mapToExaminationDTO)
@@ -127,6 +148,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<ExaminationDTO> searchExaminations(Long doctorId, LocalDate startDate, LocalDate endDate) {
+        validateDoctorOrAdminAccess();
+
         boolean hasDoctor = doctorId != null;
         boolean hasStartDate = startDate != null;
         boolean hasEndDate = endDate != null;
@@ -159,6 +182,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public MonthSickLeaveCountDTO getMonthWithMostSickLeaves() {
+        validateDoctorOrAdminAccess();
+
         List<Object[]> rows = sickLeaveRepository.countSickLeavesByMonth();
 
         if (rows.isEmpty()) {
@@ -176,6 +201,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public List<DoctorSickLeaveCountDTO> getDoctorsWithMostSickLeaves() {
+        validateDoctorOrAdminAccess();
+
         List<Object[]> rows = sickLeaveRepository.countSickLeavesByDoctor();
 
         if (rows.isEmpty()) {
@@ -192,6 +219,20 @@ public class StatisticsServiceImpl implements StatisticsService {
                         toLong(row[2])
                 ))
                 .toList();
+    }
+
+    private void validateAdminAccess() {
+        if (!currentUserService.isAdmin()) {
+            throw new InvalidOperationException("Only administrators can access this statistic");
+        }
+    }
+
+    private void validateDoctorOrAdminAccess() {
+        if (currentUserService.isAdmin() || currentUserService.isDoctor()) {
+            return;
+        }
+
+        throw new InvalidOperationException("Only administrators and doctors can access this statistic");
     }
 
     private PatientDTO mapToPatientDTO(Patient patient) {

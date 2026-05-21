@@ -132,19 +132,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/treatments/**")
                         .hasAnyRole("ADMIN", "DOCTOR")
 
-                        // Sick leaves
-                        .requestMatchers(HttpMethod.GET, "/api/sick-leaves/**")
-                        .hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
-                        .requestMatchers(HttpMethod.POST, "/api/sick-leaves/**")
-                        .hasAnyRole("ADMIN", "DOCTOR")
-                        .requestMatchers(HttpMethod.PUT, "/api/sick-leaves/**")
-                        .hasAnyRole("ADMIN", "DOCTOR")
-                        .requestMatchers(HttpMethod.DELETE, "/api/sick-leaves/**")
-                        .hasAnyRole("ADMIN", "DOCTOR")
+                                // Statistics - admin-only financial/system reports
+                                .requestMatchers(HttpMethod.GET, "/api/statistics/examinations/patient-paid-total")
+                                .hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/statistics/examinations/patient-paid-by-doctor/**")
+                                .hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/statistics/personal-doctors/patient-count")
+                                .hasRole("ADMIN")
 
-                        // Statistics
-                        .requestMatchers(HttpMethod.GET, "/api/statistics/**")
-                        .hasAnyRole("ADMIN", "DOCTOR")
+// Statistics - medical reports available to ADMIN and DOCTOR
+                                .requestMatchers(HttpMethod.GET, "/api/statistics/**")
+                                .hasAnyRole("ADMIN", "DOCTOR")
 
                         .anyRequest().authenticated()
                 )
