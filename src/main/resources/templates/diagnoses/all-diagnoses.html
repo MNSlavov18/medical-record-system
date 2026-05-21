@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnoses</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Diagnoses</h1>
+
+    <div class="actions">
+        <a class="btn btn-primary" href="/diagnoses/add">Add Diagnosis</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="diagnosis : ${diagnoses}">
+            <td th:text="${diagnosis.id}"></td>
+            <td th:text="${diagnosis.code}"></td>
+            <td th:text="${diagnosis.name}"></td>
+            <td th:text="${diagnosis.description}"></td>
+            <td>
+                <a class="btn btn-warning" th:href="@{/diagnoses/edit/{id}(id=${diagnosis.id})}">Edit</a>
+
+                <form sec:authorize="hasRole('ADMIN')"
+                      th:action="@{/diagnoses/delete/{id}(id=${diagnosis.id})}"
+                      method="post"
+                      style="display:inline;">
+                    <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
