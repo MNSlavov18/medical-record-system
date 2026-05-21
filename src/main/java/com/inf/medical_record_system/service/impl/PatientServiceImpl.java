@@ -14,6 +14,7 @@ import com.inf.medical_record_system.dto.PatientRequestDTO;
 import com.inf.medical_record_system.exception.DuplicateResourceException;
 import com.inf.medical_record_system.exception.InvalidOperationException;
 import com.inf.medical_record_system.exception.ResourceNotFoundException;
+import com.inf.medical_record_system.service.CurrentUserService;
 import com.inf.medical_record_system.service.PatientService;
 import org.springframework.stereotype.Service;
 
@@ -27,23 +28,31 @@ public class PatientServiceImpl implements PatientService {
     private final DoctorRepository doctorRepository;
     private final ExaminationRepository examinationRepository;
     private final HealthInsuranceStatusRepository healthInsuranceStatusRepository;
+    private final CurrentUserService currentUserService;
 
     public PatientServiceImpl(
             PatientRepository patientRepository,
             UserRepository userRepository,
             DoctorRepository doctorRepository,
             ExaminationRepository examinationRepository,
-            HealthInsuranceStatusRepository healthInsuranceStatusRepository
+            HealthInsuranceStatusRepository healthInsuranceStatusRepository,
+            CurrentUserService currentUserService
     ) {
         this.patientRepository = patientRepository;
         this.userRepository = userRepository;
         this.doctorRepository = doctorRepository;
         this.examinationRepository = examinationRepository;
         this.healthInsuranceStatusRepository = healthInsuranceStatusRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Override
     public List<PatientDTO> getAllPatients() {
+        if (currentUserService.isPatient()) {
+            Patient currentPatient = findPatientById(currentUserService.getCurrentPatientId());
+            return List.of(mapToPatientDTO(currentPatient));
+        }
+
         return patientRepository.findAll()
                 .stream()
                 .map(this::mapToPatientDTO)
@@ -53,6 +62,8 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public PatientDTO getPatientById(Long id) {
         Patient patient = findPatientById(id);
+        validateCanReadPatient(patient);
+
         return mapToPatientDTO(patient);
     }
 
@@ -61,11 +72,23 @@ public class PatientServiceImpl implements PatientService {
         Patient patient = patientRepository.findByEgn(egn)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found with EGN: " + egn));
 
+        validateCanReadPatient(patient);
+
         return mapToPatientDTO(patient);
     }
 
     @Override
     public List<PatientDTO> getPatientsByPersonalDoctor(Long doctorId) {
+        if (currentUserService.isPatient()) {
+            Patient currentPatient = findPatientById(currentUserService.getCurrentPatientId());
+
+            if (!currentPatient.getPersonalDoctor().getId().equals(doctorId)) {
+                throw new InvalidOperationException("Patients can view only their own patient profile");
+            }
+
+            return List.of(mapToPatientDTO(currentPatient));
+        }
+
         return patientRepository.findByPersonalDoctorId(doctorId)
                 .stream()
                 .map(this::mapToPatientDTO)
@@ -122,6 +145,10 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     public void deletePatient(Long id) {
+        if (!currentUserService.isAdmin()) {
+            throw new InvalidOperationException("Only administrators can delete patients");
+        }
+
         Patient patient = findPatientById(id);
 
         if (!examinationRepository.findByPatientId(id).isEmpty()) {
@@ -133,6 +160,24 @@ public class PatientServiceImpl implements PatientService {
         }
 
         patientRepository.delete(patient);
+    }
+
+    private void validateCanReadPatient(Patient patient) {
+        if (currentUserService.isAdmin() || currentUserService.isDoctor()) {
+            return;
+        }
+
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!patient.getId().equals(currentPatientId)) {
+                throw new InvalidOperationException("Patients can view only their own patient profile");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to view this patient");
     }
 
     private Patient findPatientById(Long id) {

@@ -74,7 +74,7 @@ public class SecurityConfig {
 
                         // Diagnoses
                         .requestMatchers(HttpMethod.GET, "/api/diagnoses/**")
-                        .hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
+                        .hasAnyRole("ADMIN", "DOCTOR")
                         .requestMatchers(HttpMethod.POST, "/api/diagnoses/**")
                         .hasAnyRole("ADMIN", "DOCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/diagnoses/**")

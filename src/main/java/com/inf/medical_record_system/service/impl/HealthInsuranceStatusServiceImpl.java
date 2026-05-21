@@ -7,7 +7,9 @@ import com.inf.medical_record_system.data.repo.PatientRepository;
 import com.inf.medical_record_system.dto.HealthInsuranceStatusDTO;
 import com.inf.medical_record_system.dto.HealthInsuranceStatusRequestDTO;
 import com.inf.medical_record_system.exception.DuplicateResourceException;
+import com.inf.medical_record_system.exception.InvalidOperationException;
 import com.inf.medical_record_system.exception.ResourceNotFoundException;
+import com.inf.medical_record_system.service.CurrentUserService;
 import com.inf.medical_record_system.service.HealthInsuranceStatusService;
 import org.springframework.stereotype.Service;
 
@@ -21,17 +23,29 @@ public class HealthInsuranceStatusServiceImpl implements HealthInsuranceStatusSe
 
     private final HealthInsuranceStatusRepository healthInsuranceStatusRepository;
     private final PatientRepository patientRepository;
+    private final CurrentUserService currentUserService;
 
     public HealthInsuranceStatusServiceImpl(
             HealthInsuranceStatusRepository healthInsuranceStatusRepository,
-            PatientRepository patientRepository
+            PatientRepository patientRepository,
+            CurrentUserService currentUserService
     ) {
         this.healthInsuranceStatusRepository = healthInsuranceStatusRepository;
         this.patientRepository = patientRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Override
     public List<HealthInsuranceStatusDTO> getAllStatuses() {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return healthInsuranceStatusRepository.findByPatientId(currentPatientId)
+                    .stream()
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         return healthInsuranceStatusRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
@@ -41,11 +55,21 @@ public class HealthInsuranceStatusServiceImpl implements HealthInsuranceStatusSe
     @Override
     public HealthInsuranceStatusDTO getStatusById(Long id) {
         HealthInsuranceStatus status = findStatusById(id);
+        validateCanReadStatus(status);
+
         return mapToDTO(status);
     }
 
     @Override
     public List<HealthInsuranceStatusDTO> getStatusesByPatient(Long patientId) {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!currentPatientId.equals(patientId)) {
+                throw new InvalidOperationException("Patients can view only their own health insurance statuses");
+            }
+        }
+
         return healthInsuranceStatusRepository.findByPatientId(patientId)
                 .stream()
                 .map(this::mapToDTO)
@@ -106,12 +130,17 @@ public class HealthInsuranceStatusServiceImpl implements HealthInsuranceStatusSe
 
     @Override
     public void deleteStatus(Long id) {
+        if (!currentUserService.isAdmin()) {
+            throw new InvalidOperationException("Only administrators can delete health insurance statuses");
+        }
+
         HealthInsuranceStatus status = findStatusById(id);
         healthInsuranceStatusRepository.delete(status);
     }
 
     @Override
     public boolean isPatientInsuredForLastSixMonths(Long patientId, LocalDate referenceDate) {
+        validateCanCheckPatientInsurance(patientId);
         findPatientById(patientId);
 
         YearMonth currentMonth = YearMonth.from(referenceDate);
@@ -133,6 +162,42 @@ public class HealthInsuranceStatusServiceImpl implements HealthInsuranceStatusSe
         }
 
         return true;
+    }
+
+    private void validateCanReadStatus(HealthInsuranceStatus status) {
+        if (currentUserService.isAdmin() || currentUserService.isDoctor()) {
+            return;
+        }
+
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!status.getPatient().getId().equals(currentPatientId)) {
+                throw new InvalidOperationException("Patients can view only their own health insurance statuses");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to view this health insurance status");
+    }
+
+    private void validateCanCheckPatientInsurance(Long patientId) {
+        if (currentUserService.isAdmin() || currentUserService.isDoctor()) {
+            return;
+        }
+
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!currentPatientId.equals(patientId)) {
+                throw new InvalidOperationException("Patients can check only their own insurance status");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to check this insurance status");
     }
 
     private HealthInsuranceStatus findStatusById(Long id) {
