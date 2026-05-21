@@ -9,6 +9,7 @@ import com.inf.medical_record_system.dto.SickLeaveRequestDTO;
 import com.inf.medical_record_system.exception.DuplicateResourceException;
 import com.inf.medical_record_system.exception.InvalidOperationException;
 import com.inf.medical_record_system.exception.ResourceNotFoundException;
+import com.inf.medical_record_system.service.CurrentUserService;
 import com.inf.medical_record_system.service.SickLeaveService;
 import org.springframework.stereotype.Service;
 
@@ -20,17 +21,30 @@ public class SickLeaveServiceImpl implements SickLeaveService {
 
     private final SickLeaveRepository sickLeaveRepository;
     private final ExaminationRepository examinationRepository;
+    private final CurrentUserService currentUserService;
 
     public SickLeaveServiceImpl(
             SickLeaveRepository sickLeaveRepository,
-            ExaminationRepository examinationRepository
+            ExaminationRepository examinationRepository,
+            CurrentUserService currentUserService
     ) {
         this.sickLeaveRepository = sickLeaveRepository;
         this.examinationRepository = examinationRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Override
     public List<SickLeaveDTO> getAllSickLeaves() {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return sickLeaveRepository.findAll()
+                    .stream()
+                    .filter(sickLeave -> sickLeave.getExamination().getPatient().getId().equals(currentPatientId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         return sickLeaveRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
@@ -40,6 +54,8 @@ public class SickLeaveServiceImpl implements SickLeaveService {
     @Override
     public SickLeaveDTO getSickLeaveById(Long id) {
         SickLeave sickLeave = findSickLeaveById(id);
+        validateCanReadSickLeave(sickLeave);
+
         return mapToDTO(sickLeave);
     }
 
@@ -50,11 +66,21 @@ public class SickLeaveServiceImpl implements SickLeaveService {
                         "Sick leave not found for examination with id: " + examinationId
                 ));
 
+        validateCanReadSickLeave(sickLeave);
+
         return mapToDTO(sickLeave);
     }
 
     @Override
     public List<SickLeaveDTO> getSickLeavesByPatient(Long patientId) {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!currentPatientId.equals(patientId)) {
+                throw new InvalidOperationException("Patients can view only their own sick leaves");
+            }
+        }
+
         return sickLeaveRepository.findByExaminationPatientId(patientId)
                 .stream()
                 .map(this::mapToDTO)
@@ -63,6 +89,16 @@ public class SickLeaveServiceImpl implements SickLeaveService {
 
     @Override
     public List<SickLeaveDTO> getSickLeavesByDoctor(Long doctorId) {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return sickLeaveRepository.findByExaminationDoctorId(doctorId)
+                    .stream()
+                    .filter(sickLeave -> sickLeave.getExamination().getPatient().getId().equals(currentPatientId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         return sickLeaveRepository.findByExaminationDoctorId(doctorId)
                 .stream()
                 .map(this::mapToDTO)
@@ -72,6 +108,16 @@ public class SickLeaveServiceImpl implements SickLeaveService {
     @Override
     public List<SickLeaveDTO> getSickLeavesByPeriod(LocalDate startDate, LocalDate endDate) {
         validateDatePeriod(startDate, endDate);
+
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return sickLeaveRepository.findByStartDateBetween(startDate, endDate)
+                    .stream()
+                    .filter(sickLeave -> sickLeave.getExamination().getPatient().getId().equals(currentPatientId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
 
         return sickLeaveRepository.findByStartDateBetween(startDate, endDate)
                 .stream()
@@ -83,6 +129,7 @@ public class SickLeaveServiceImpl implements SickLeaveService {
     public SickLeaveDTO createSickLeave(SickLeaveRequestDTO requestDTO) {
         Examination examination = findExaminationById(requestDTO.getExaminationId());
 
+        validateCanModifySickLeaveForExamination(examination);
         validateSickLeaveStartDate(requestDTO.getStartDate(), examination.getExaminationDate());
 
         if (sickLeaveRepository.findByExaminationId(examination.getId()).isPresent()) {
@@ -102,8 +149,11 @@ public class SickLeaveServiceImpl implements SickLeaveService {
     @Override
     public SickLeaveDTO updateSickLeave(Long id, SickLeaveRequestDTO requestDTO) {
         SickLeave sickLeave = findSickLeaveById(id);
+        validateCanModifySickLeave(sickLeave);
+
         Examination examination = findExaminationById(requestDTO.getExaminationId());
 
+        validateCanModifySickLeaveForExamination(examination);
         validateSickLeaveStartDate(requestDTO.getStartDate(), examination.getExaminationDate());
 
         sickLeaveRepository.findByExaminationId(examination.getId())
@@ -125,7 +175,49 @@ public class SickLeaveServiceImpl implements SickLeaveService {
     @Override
     public void deleteSickLeave(Long id) {
         SickLeave sickLeave = findSickLeaveById(id);
+        validateCanModifySickLeave(sickLeave);
+
         sickLeaveRepository.delete(sickLeave);
+    }
+
+    private void validateCanReadSickLeave(SickLeave sickLeave) {
+        if (currentUserService.isAdmin() || currentUserService.isDoctor()) {
+            return;
+        }
+
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!sickLeave.getExamination().getPatient().getId().equals(currentPatientId)) {
+                throw new InvalidOperationException("Patients can view only their own sick leaves");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to view this sick leave");
+    }
+
+    private void validateCanModifySickLeave(SickLeave sickLeave) {
+        validateCanModifySickLeaveForExamination(sickLeave.getExamination());
+    }
+
+    private void validateCanModifySickLeaveForExamination(Examination examination) {
+        if (currentUserService.isAdmin()) {
+            return;
+        }
+
+        if (currentUserService.isDoctor()) {
+            Long currentDoctorId = currentUserService.getCurrentDoctorId();
+
+            if (!examination.getDoctor().getId().equals(currentDoctorId)) {
+                throw new InvalidOperationException("Doctors can modify only sick leaves connected to their own examinations");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to modify sick leaves");
     }
 
     private SickLeave findSickLeaveById(Long id) {

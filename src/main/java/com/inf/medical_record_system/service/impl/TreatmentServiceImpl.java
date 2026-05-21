@@ -9,6 +9,7 @@ import com.inf.medical_record_system.dto.TreatmentRequestDTO;
 import com.inf.medical_record_system.exception.DuplicateResourceException;
 import com.inf.medical_record_system.exception.InvalidOperationException;
 import com.inf.medical_record_system.exception.ResourceNotFoundException;
+import com.inf.medical_record_system.service.CurrentUserService;
 import com.inf.medical_record_system.service.TreatmentService;
 import org.springframework.stereotype.Service;
 
@@ -20,17 +21,30 @@ public class TreatmentServiceImpl implements TreatmentService {
 
     private final TreatmentRepository treatmentRepository;
     private final ExaminationRepository examinationRepository;
+    private final CurrentUserService currentUserService;
 
     public TreatmentServiceImpl(
             TreatmentRepository treatmentRepository,
-            ExaminationRepository examinationRepository
+            ExaminationRepository examinationRepository,
+            CurrentUserService currentUserService
     ) {
         this.treatmentRepository = treatmentRepository;
         this.examinationRepository = examinationRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Override
     public List<TreatmentDTO> getAllTreatments() {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            return treatmentRepository.findAll()
+                    .stream()
+                    .filter(treatment -> treatment.getExamination().getPatient().getId().equals(currentPatientId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         return treatmentRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
@@ -40,6 +54,8 @@ public class TreatmentServiceImpl implements TreatmentService {
     @Override
     public TreatmentDTO getTreatmentById(Long id) {
         Treatment treatment = findTreatmentById(id);
+        validateCanReadTreatment(treatment);
+
         return mapToDTO(treatment);
     }
 
@@ -50,6 +66,8 @@ public class TreatmentServiceImpl implements TreatmentService {
                         "Treatment not found for examination with id: " + examinationId
                 ));
 
+        validateCanReadTreatment(treatment);
+
         return mapToDTO(treatment);
     }
 
@@ -58,6 +76,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         validateTreatmentDates(requestDTO.getStartDate(), requestDTO.getEndDate());
 
         Examination examination = findExaminationById(requestDTO.getExaminationId());
+        validateCanModifyTreatmentForExamination(examination);
 
         if (treatmentRepository.findByExaminationId(examination.getId()).isPresent()) {
             throw new DuplicateResourceException("This examination already has a treatment");
@@ -80,7 +99,10 @@ public class TreatmentServiceImpl implements TreatmentService {
         validateTreatmentDates(requestDTO.getStartDate(), requestDTO.getEndDate());
 
         Treatment treatment = findTreatmentById(id);
+        validateCanModifyTreatment(treatment);
+
         Examination examination = findExaminationById(requestDTO.getExaminationId());
+        validateCanModifyTreatmentForExamination(examination);
 
         treatmentRepository.findByExaminationId(examination.getId())
                 .ifPresent(existingTreatment -> {
@@ -103,7 +125,49 @@ public class TreatmentServiceImpl implements TreatmentService {
     @Override
     public void deleteTreatment(Long id) {
         Treatment treatment = findTreatmentById(id);
+        validateCanModifyTreatment(treatment);
+
         treatmentRepository.delete(treatment);
+    }
+
+    private void validateCanReadTreatment(Treatment treatment) {
+        if (currentUserService.isAdmin() || currentUserService.isDoctor()) {
+            return;
+        }
+
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!treatment.getExamination().getPatient().getId().equals(currentPatientId)) {
+                throw new InvalidOperationException("Patients can view only their own treatments");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to view this treatment");
+    }
+
+    private void validateCanModifyTreatment(Treatment treatment) {
+        validateCanModifyTreatmentForExamination(treatment.getExamination());
+    }
+
+    private void validateCanModifyTreatmentForExamination(Examination examination) {
+        if (currentUserService.isAdmin()) {
+            return;
+        }
+
+        if (currentUserService.isDoctor()) {
+            Long currentDoctorId = currentUserService.getCurrentDoctorId();
+
+            if (!examination.getDoctor().getId().equals(currentDoctorId)) {
+                throw new InvalidOperationException("Doctors can modify only treatments connected to their own examinations");
+            }
+
+            return;
+        }
+
+        throw new InvalidOperationException("You do not have permission to modify treatments");
     }
 
     private Treatment findTreatmentById(Long id) {
