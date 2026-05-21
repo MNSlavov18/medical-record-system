@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctors</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Doctors</h1>
+
+    <div class="error" th:if="${pageError}" th:text="${pageError}"></div>
+
+    <div class="actions">
+        <a class="btn btn-primary" href="/doctors/add">Add Doctor</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>UIN</th>
+            <th>Name</th>
+            <th>User</th>
+            <th>Specialty</th>
+            <th>Personal Doctor</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="doctor : ${doctors}">
+            <td th:text="${doctor.id}"></td>
+            <td th:text="${doctor.uniqueIdentificationNumber}"></td>
+            <td th:text="${doctor.fullName}"></td>
+            <td th:text="${doctor.username}"></td>
+            <td th:text="${doctor.specialtyName}"></td>
+            <td th:text="${doctor.canBePersonalDoctor ? 'Yes' : 'No'}"></td>
+            <td>
+                <a class="btn btn-warning" th:href="@{/doctors/edit/{id}(id=${doctor.id})}">Edit</a>
+
+                <form th:action="@{/doctors/delete/{id}(id=${doctor.id})}" method="post" style="display:inline;">
+                    <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

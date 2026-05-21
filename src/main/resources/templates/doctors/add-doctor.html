@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Doctor</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Add Doctor</h1>
+
+    <div class="error" th:if="${formError}" th:text="${formError}"></div>
+
+    <form th:action="@{/doctors/add}" th:object="${doctor}" method="post">
+        <div class="form-group">
+            <label for="uniqueIdentificationNumber">Unique Identification Number</label>
+            <input id="uniqueIdentificationNumber" type="text" th:field="*{uniqueIdentificationNumber}">
+            <div class="error"
+                 th:if="${#fields.hasErrors('uniqueIdentificationNumber')}"
+                 th:errors="*{uniqueIdentificationNumber}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input id="fullName" type="text" th:field="*{fullName}">
+            <div class="error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="userId">User Account</label>
+            <select id="userId" th:field="*{userId}">
+                <option value="">-- Select doctor user --</option>
+                <option th:each="user : ${doctorUsers}"
+                        th:value="${user.id}"
+                        th:text="${user.username + ' (' + user.email + ')'}">
+                </option>
+            </select>
+            <div class="error" th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="specialtyId">Specialty</label>
+            <select id="specialtyId" th:field="*{specialtyId}">
+                <option value="">-- Select specialty --</option>
+                <option th:each="specialty : ${specialties}"
+                        th:value="${specialty.id}"
+                        th:text="${specialty.name}">
+                </option>
+            </select>
+            <div class="error" th:if="${#fields.hasErrors('specialtyId')}" th:errors="*{specialtyId}"></div>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" th:field="*{canBePersonalDoctor}">
+                Can be personal doctor
+            </label>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-secondary" href="/doctors">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>
