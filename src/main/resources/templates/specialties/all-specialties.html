@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Specialties</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Specialties</h1>
+
+    <div class="actions">
+        <a class="btn btn-primary" href="/specialties/add">Add Specialty</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="specialty : ${specialties}">
+            <td th:text="${specialty.id}"></td>
+            <td th:text="${specialty.name}"></td>
+            <td>
+                <a class="btn btn-warning" th:href="@{/specialties/edit/{id}(id=${specialty.id})}">Edit</a>
+
+                <form th:action="@{/specialties/delete/{id}(id=${specialty.id})}" method="post" style="display:inline;">
+                    <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

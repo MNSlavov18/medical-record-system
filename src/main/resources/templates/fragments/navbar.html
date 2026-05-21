@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<body>
+
+<nav class="navbar" th:fragment="navbar">
+    <a href="/home">Home</a>
+
+    <a href="/specialties" sec:authorize="hasRole('ADMIN')">Specialties</a>
+
+    <a href="/diagnoses" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Diagnoses</a>
+
+    <a href="/swagger-ui/index.html" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Swagger API</a>
+
+    <span style="margin-left:auto; color:white;" sec:authorize="isAuthenticated()">
+        Logged as:
+        <strong sec:authentication="name"></strong>
+    </span>
+
+    <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" style="display:inline;">
+        <button class="btn btn-secondary" type="submit">Logout</button>
+    </form>
+
+    <a href="/login" sec:authorize="!isAuthenticated()">Login</a>
+</nav>
+
+</body>
+</html>

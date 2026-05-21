@@ -27,23 +27,38 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\":\"Unauthorized\"}");
+                            String uri = request.getRequestURI();
+
+                            if (uri.startsWith("/api/")) {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"error\":\"Unauthorized\"}");
+                            } else {
+                                response.sendRedirect("/login");
+                            }
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\":\"Forbidden\"}");
+                            String uri = request.getRequestURI();
+
+                            if (uri.startsWith("/api/")) {
+                                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"error\":\"Forbidden\"}");
+                            } else {
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                            }
                         })
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // Public pages
+                        .requestMatchers("/", "/home", "/login").permitAll()
 
                         // Swagger/OpenAPI
                         .requestMatchers(
@@ -52,15 +67,23 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // Static resources for later UI
+                        // Static resources
                         .requestMatchers(
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
                         ).permitAll()
 
+                        // Thymeleaf pages
+                        .requestMatchers("/specialties/**").hasRole("ADMIN")
+                        .requestMatchers("/diagnoses/**").hasAnyRole("ADMIN", "DOCTOR")
+
                         // Users - only ADMIN
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                        // Authentication check
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me")
+                        .hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
 
                         // Specialties
                         .requestMatchers(HttpMethod.GET, "/api/specialties/**")
@@ -132,32 +155,48 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/treatments/**")
                         .hasAnyRole("ADMIN", "DOCTOR")
 
-                                // Statistics - admin-only financial/system reports
-                                .requestMatchers(HttpMethod.GET, "/api/statistics/examinations/patient-paid-total")
-                                .hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/statistics/examinations/patient-paid-by-doctor/**")
-                                .hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/statistics/personal-doctors/patient-count")
-                                .hasRole("ADMIN")
+                        // Sick leaves
+                        .requestMatchers(HttpMethod.GET, "/api/sick-leaves/**")
+                        .hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
+                        .requestMatchers(HttpMethod.POST, "/api/sick-leaves/**")
+                        .hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/sick-leaves/**")
+                        .hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/sick-leaves/**")
+                        .hasAnyRole("ADMIN", "DOCTOR")
 
-// Statistics - medical reports available to ADMIN and DOCTOR
-                                .requestMatchers(HttpMethod.GET, "/api/statistics/**")
-                                .hasAnyRole("ADMIN", "DOCTOR")
+                        // Statistics - admin-only financial/system reports
+                        .requestMatchers(HttpMethod.GET, "/api/statistics/examinations/patient-paid-total")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/statistics/examinations/patient-paid-by-doctor/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/statistics/personal-doctors/patient-count")
+                        .hasRole("ADMIN")
+
+                        // Statistics - medical reports
+                        .requestMatchers(HttpMethod.GET, "/api/statistics/**")
+                        .hasAnyRole("ADMIN", "DOCTOR")
 
                         .anyRequest().authenticated()
                 )
 
                 .authenticationProvider(authenticationProvider())
 
-                .httpBasic(httpBasic -> httpBasic
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\":\"Unauthorized\"}");
-                        })
+                .httpBasic(httpBasic -> {})
+
+                .formLogin(formLogin -> formLogin
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/home", true)
+                        .failureUrl("/login?error=true")
+                        .permitAll()
                 )
 
-                .formLogin(formLogin -> formLogin.disable());
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout=true")
+                        .permitAll()
+                );
 
         return http.build();
     }

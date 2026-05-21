@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Specialty</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Add Specialty</h1>
+
+    <form th:action="@{/specialties/add}" th:object="${specialty}" method="post">
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input id="name" type="text" th:field="*{name}">
+            <div class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-secondary" href="/specialties">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>
