@@ -1,8 +1,5 @@
 package com.inf.medical_record_system.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,17 +13,23 @@ public class TreatmentDTO {
 
     private Long id;
 
-    @NotBlank(message = "Treatment description is required")
-    @Size(max = 2000, message = "Treatment description must be maximum 2000 characters")
     private String description;
 
     private LocalDate startDate;
 
     private LocalDate endDate;
 
-    @Size(max = 2000, message = "Prescribed medication must be maximum 2000 characters")
     private String prescribedMedication;
 
-    @NotNull(message = "Examination is required")
     private Long examinationId;
+
+    private LocalDate examinationDate;
+
+    private Long patientId;
+
+    private String patientName;
+
+    private Long doctorId;
+
+    private String doctorName;
 }
