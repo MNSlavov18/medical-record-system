@@ -276,3 +276,22 @@ select {
 .stat-card h3 {
     margin-top: 0;
 }
+
+.error-page-box {
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.error-page-box h2 {
+    font-size: 64px;
+    margin: 0;
+    color: #dc2626;
+}
+
+.error-page-box p {
+    font-size: 18px;
+    color: #374151;
+}

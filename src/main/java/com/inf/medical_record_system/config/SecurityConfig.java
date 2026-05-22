@@ -50,7 +50,7 @@ public class SecurityConfig {
                                 response.setContentType("application/json");
                                 response.getWriter().write("{\"error\":\"Forbidden\"}");
                             } else {
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                                response.sendRedirect("/access-denied");
                             }
                         })
                 )
@@ -59,6 +59,7 @@ public class SecurityConfig {
 
                         // Public pages
                         .requestMatchers("/", "/home", "/login").permitAll()
+                        .requestMatchers("/", "/home", "/login", "/error", "/access-denied").permitAll()
 
                         // Swagger/OpenAPI
                         .requestMatchers(
