@@ -16,13 +16,15 @@
 
     <a href="/treatments" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')">Treatments</a>
 
+    <a href="/sick-leaves" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')">Sick Leaves</a>
+
     <a href="/doctors" sec:authorize="hasRole('ADMIN')">Doctors</a>
 
     <a href="/diagnoses" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Diagnoses</a>
 
     <a href="/specialties" sec:authorize="hasRole('ADMIN')">Specialties</a>
 
-    <a href="/swagger-ui/index.html" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Swagger API</a>
+    <a href="/swagger-ui/index.html" sec:authorize="hasAnyRole('ADMIN')">Swagger API</a>
 
     <span style="margin-left:auto; color:white;" sec:authorize="isAuthenticated()">
         Logged as:

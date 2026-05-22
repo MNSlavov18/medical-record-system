@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Sick Leave</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Add Sick Leave</h1>
+
+    <div class="info-box">
+        A sick leave is connected to exactly one examination. The start date cannot be before the examination date.
+    </div>
+
+    <div class="error" th:if="${formError}" th:text="${formError}"></div>
+
+    <form th:action="@{/sick-leaves/add}" th:object="${sickLeave}" method="post">
+
+        <div class="form-group">
+            <label for="examinationId">Examination</label>
+            <select id="examinationId" th:field="*{examinationId}">
+                <option value="">-- Select examination --</option>
+                <option th:each="examination : ${examinations}"
+                        th:value="${examination.id}"
+                        th:text="${'#' + examination.id + ' | ' + examination.examinationDate + ' | ' + examination.patientName + ' | ' + examination.doctorName + ' | ' + examination.diagnosisName}">
+                </option>
+            </select>
+            <div class="error"
+                 th:if="${#fields.hasErrors('examinationId')}"
+                 th:errors="*{examinationId}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="startDate">Start Date</label>
+                <input id="startDate" type="date" th:field="*{startDate}">
+                <div class="error"
+                     th:if="${#fields.hasErrors('startDate')}"
+                     th:errors="*{startDate}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="numberOfDays">Number of Days</label>
+                <input id="numberOfDays"
+                       type="number"
+                       min="1"
+                       th:field="*{numberOfDays}"
+                       placeholder="Example: 7">
+                <div class="error"
+                     th:if="${#fields.hasErrors('numberOfDays')}"
+                     th:errors="*{numberOfDays}">
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-secondary" href="/sick-leaves">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>

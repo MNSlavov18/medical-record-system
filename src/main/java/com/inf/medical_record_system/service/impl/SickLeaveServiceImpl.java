@@ -35,6 +35,23 @@ public class SickLeaveServiceImpl implements SickLeaveService {
 
     @Override
     public List<SickLeaveDTO> getAllSickLeaves() {
+        if (currentUserService.isAdmin()) {
+            return sickLeaveRepository.findAll()
+                    .stream()
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
+        if (currentUserService.isDoctor()) {
+            Long currentDoctorId = currentUserService.getCurrentDoctorId();
+
+            return sickLeaveRepository.findAll()
+                    .stream()
+                    .filter(sickLeave -> sickLeave.getExamination().getDoctor().getId().equals(currentDoctorId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         if (currentUserService.isPatient()) {
             Long currentPatientId = currentUserService.getCurrentPatientId();
 
@@ -45,10 +62,7 @@ public class SickLeaveServiceImpl implements SickLeaveService {
                     .toList();
         }
 
-        return sickLeaveRepository.findAll()
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+        throw new InvalidOperationException("You do not have permission to view sick leaves");
     }
 
     @Override

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Sick Leaves</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Sick Leaves</h1>
+
+    <div class="error" th:if="${pageError}" th:text="${pageError}"></div>
+
+    <div class="actions" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
+        <a class="btn btn-primary" href="/sick-leaves/add">Add Sick Leave</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Examination Date</th>
+            <th>Start Date</th>
+            <th>Days</th>
+            <th sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="sickLeave : ${sickLeaves}">
+            <td th:text="${sickLeave.id}"></td>
+            <td th:text="${sickLeave.patientName}"></td>
+            <td th:text="${sickLeave.doctorName}"></td>
+            <td th:text="${sickLeave.examinationDate}"></td>
+            <td th:text="${sickLeave.startDate}"></td>
+            <td th:text="${sickLeave.numberOfDays}"></td>
+
+            <td sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
+                <div th:if="${isAdmin or (currentDoctorId != null and sickLeave.doctorId == currentDoctorId)}">
+                    <a class="btn btn-warning"
+                       th:href="@{/sick-leaves/edit/{id}(id=${sickLeave.id})}">
+                        Edit
+                    </a>
+
+                    <form th:action="@{/sick-leaves/delete/{id}(id=${sickLeave.id})}"
+                          method="post"
+                          style="display:inline;">
+                        <button class="btn btn-danger" type="submit">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
