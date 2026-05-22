@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Check Health Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Check Health Insurance</h1>
+
+    <div class="info-box">
+        This checks whether the selected patient has health insurance for the last 6 months.
+    </div>
+
+    <form method="get" th:action="@{/health-insurance-statuses/check}">
+        <div class="form-group">
+            <label for="patientId">Patient</label>
+            <select id="patientId" name="patientId">
+                <option value="">-- Select patient --</option>
+                <option th:each="patient : ${patients}"
+                        th:value="${patient.id}"
+                        th:selected="${selectedPatientId != null && selectedPatientId == patient.id}"
+                        th:text="${patient.fullName + ' (' + patient.egn + ')'}">
+                </option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Check</button>
+        <a class="btn btn-secondary" href="/health-insurance-statuses">Back</a>
+    </form>
+
+    <div style="margin-top: 25px;" th:if="${insuredResult != null}">
+        <h2>Result</h2>
+
+        <span th:if="${insuredResult}" class="badge badge-success">
+            Patient is insured for the last 6 months
+        </span>
+
+        <span th:if="${!insuredResult}" class="badge badge-danger">
+            Patient is not insured for the last 6 months
+        </span>
+    </div>
+</div>
+
+</body>
+</html>

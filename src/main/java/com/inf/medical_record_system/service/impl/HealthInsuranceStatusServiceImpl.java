@@ -11,6 +11,7 @@ import com.inf.medical_record_system.exception.InvalidOperationException;
 import com.inf.medical_record_system.exception.ResourceNotFoundException;
 import com.inf.medical_record_system.service.CurrentUserService;
 import com.inf.medical_record_system.service.HealthInsuranceStatusService;
+import com.inf.medical_record_system.dto.HealthInsurancePeriodRequestDTO;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -58,6 +59,44 @@ public class HealthInsuranceStatusServiceImpl implements HealthInsuranceStatusSe
         validateCanReadStatus(status);
 
         return mapToDTO(status);
+    }
+
+    @Override
+    public List<HealthInsuranceStatusDTO> createStatusesForPeriod(HealthInsurancePeriodRequestDTO requestDTO) {
+        Patient patient = findPatientById(requestDTO.getPatientId());
+
+        YearMonth start = YearMonth.of(requestDTO.getStartYear(), requestDTO.getStartMonth());
+        YearMonth end = YearMonth.of(requestDTO.getEndYear(), requestDTO.getEndMonth());
+
+        if (start.isAfter(end)) {
+            throw new InvalidOperationException("Start month cannot be after end month");
+        }
+
+        List<HealthInsuranceStatusDTO> createdStatuses = new java.util.ArrayList<>();
+
+        YearMonth current = start;
+
+        while (!current.isAfter(end)) {
+            HealthInsuranceStatus status = healthInsuranceStatusRepository
+                    .findByPatientIdAndYearAndMonth(
+                            requestDTO.getPatientId(),
+                            current.getYear(),
+                            current.getMonthValue()
+                    )
+                    .orElseGet(HealthInsuranceStatus::new);
+
+            status.setPatient(patient);
+            status.setYear(current.getYear());
+            status.setMonth(current.getMonthValue());
+            status.setInsured(requestDTO.isInsured());
+
+            HealthInsuranceStatus savedStatus = healthInsuranceStatusRepository.save(status);
+            createdStatuses.add(mapToDTO(savedStatus));
+
+            current = current.plusMonths(1);
+        }
+
+        return createdStatuses;
     }
 
     @Override

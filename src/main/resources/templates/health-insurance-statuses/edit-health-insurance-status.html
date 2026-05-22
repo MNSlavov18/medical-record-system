@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Health Insurance Status</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Edit Health Insurance Status</h1>
+
+    <div class="error" th:if="${formError}" th:text="${formError}"></div>
+
+    <form th:action="@{/health-insurance-statuses/edit/{id}(id=${statusId})}" th:object="${status}" method="post">
+        <div class="form-group">
+            <label for="patientId">Patient</label>
+            <select id="patientId" th:field="*{patientId}">
+                <option value="">-- Select patient --</option>
+                <option th:each="patient : ${patients}"
+                        th:value="${patient.id}"
+                        th:text="${patient.fullName + ' (' + patient.egn + ')'}">
+                </option>
+            </select>
+            <div class="error" th:if="${#fields.hasErrors('patientId')}" th:errors="*{patientId}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="year">Year</label>
+            <input id="year" type="number" th:field="*{year}">
+            <div class="error" th:if="${#fields.hasErrors('year')}" th:errors="*{year}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="month">Month</label>
+            <input id="month" type="number" th:field="*{month}">
+            <div class="error" th:if="${#fields.hasErrors('month')}" th:errors="*{month}"></div>
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" th:field="*{insured}">
+                Patient is insured for this month
+            </label>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Update</button>
+        <a class="btn btn-secondary" href="/health-insurance-statuses">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>

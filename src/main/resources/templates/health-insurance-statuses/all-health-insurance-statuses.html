@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Health Insurance Statuses</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Health Insurance Statuses</h1>
+
+    <div class="error" th:if="${pageError}" th:text="${pageError}"></div>
+
+    <!-- PATIENT automatic status -->
+    <div class="info-box" sec:authorize="hasRole('PATIENT')">
+        <strong>Insured last 6 months:</strong>
+
+        <span th:if="${insuredLastSixMonths}" class="badge badge-success">
+            Yes
+        </span>
+
+        <span th:if="${insuredLastSixMonths == false}" class="badge badge-danger">
+            No
+        </span>
+    </div>
+
+    <!-- ADMIN / DOCTOR buttons only -->
+    <div class="actions" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
+        <a class="btn btn-primary"
+           href="/health-insurance-statuses/add">
+            Add Status
+        </a>
+
+        <a class="btn btn-secondary"
+           href="/health-insurance-statuses/check">
+            Check Last 6 Months
+        </a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Patient</th>
+            <th>Year</th>
+            <th>Month</th>
+            <th>Status</th>
+            <th sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="status : ${statuses}">
+            <td th:text="${status.id}"></td>
+            <td th:text="${status.patientName}"></td>
+            <td th:text="${status.year}"></td>
+            <td th:text="${status.month}"></td>
+            <td>
+                <span th:if="${status.insured}" class="badge badge-success">Insured</span>
+                <span th:if="${!status.insured}" class="badge badge-danger">Not insured</span>
+            </td>
+
+            <td sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
+                <a class="btn btn-warning"
+                   th:href="@{/health-insurance-statuses/edit/{id}(id=${status.id})}">
+                    Edit
+                </a>
+
+                <form sec:authorize="hasRole('ADMIN')"
+                      th:action="@{/health-insurance-statuses/delete/{id}(id=${status.id})}"
+                      method="post"
+                      style="display:inline;">
+                    <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

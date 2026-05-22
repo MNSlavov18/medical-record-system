@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Health Insurance Period</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Add Health Insurance Period</h1>
+
+    <div class="info-box">
+        Select a period and the system will create monthly health insurance records automatically.
+    </div>
+
+    <div class="error" th:if="${formError}" th:text="${formError}"></div>
+
+    <form th:action="@{/health-insurance-statuses/add}" th:object="${statusPeriod}" method="post">
+
+        <div class="form-group">
+            <label for="patientId">Patient</label>
+            <select id="patientId" th:field="*{patientId}">
+                <option value="">-- Select patient --</option>
+                <option th:each="patient : ${patients}"
+                        th:value="${patient.id}"
+                        th:text="${patient.fullName + ' (' + patient.egn + ')'}">
+                </option>
+            </select>
+            <div class="error"
+                 th:if="${#fields.hasErrors('patientId')}"
+                 th:errors="*{patientId}">
+            </div>
+        </div>
+
+        <h3>Start period</h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="startYear">Start Year</label>
+                <input id="startYear"
+                       type="number"
+                       th:field="*{startYear}"
+                       placeholder="Example: 2025">
+                <div class="error"
+                     th:if="${#fields.hasErrors('startYear')}"
+                     th:errors="*{startYear}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="startMonth">Start Month</label>
+                <select id="startMonth" th:field="*{startMonth}">
+                    <option value="">-- Select month --</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+                <div class="error"
+                     th:if="${#fields.hasErrors('startMonth')}"
+                     th:errors="*{startMonth}">
+                </div>
+            </div>
+        </div>
+
+        <h3>End period</h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="endYear">End Year</label>
+                <input id="endYear"
+                       type="number"
+                       th:field="*{endYear}"
+                       placeholder="Example: 2026">
+                <div class="error"
+                     th:if="${#fields.hasErrors('endYear')}"
+                     th:errors="*{endYear}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="endMonth">End Month</label>
+                <select id="endMonth" th:field="*{endMonth}">
+                    <option value="">-- Select month --</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+                <div class="error"
+                     th:if="${#fields.hasErrors('endMonth')}"
+                     th:errors="*{endMonth}">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" th:field="*{insured}">
+                Patient is insured for this period
+            </label>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save Period</button>
+        <a class="btn btn-secondary" href="/health-insurance-statuses">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>

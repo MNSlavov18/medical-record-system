@@ -10,6 +10,8 @@
 
     <a href="/patients" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')">Patients</a>
 
+    <a href="/health-insurance-statuses" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')">Insurance</a>
+
     <a href="/doctors" sec:authorize="hasRole('ADMIN')">Doctors</a>
 
     <a href="/diagnoses" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Diagnoses</a>

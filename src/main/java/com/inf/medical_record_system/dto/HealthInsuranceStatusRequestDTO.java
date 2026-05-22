@@ -15,13 +15,15 @@ public class HealthInsuranceStatusRequestDTO {
     @NotNull(message = "Patient is required")
     private Long patientId;
 
+    @NotNull(message = "Year is required")
     @Min(value = 2000, message = "Year must be after 2000")
     @Max(value = 2100, message = "Year must be before 2100")
-    private int year;
+    private Integer year;
 
+    @NotNull(message = "Month is required")
     @Min(value = 1, message = "Month must be between 1 and 12")
     @Max(value = 12, message = "Month must be between 1 and 12")
-    private int month;
+    private Integer month;
 
     private boolean insured;
 }
