@@ -88,6 +88,11 @@ public class SecurityConfig {
                         .requestMatchers("/health-insurance-statuses/edit/**").hasAnyRole("ADMIN", "DOCTOR")
                         .requestMatchers("/health-insurance-statuses/**").hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
 
+                        .requestMatchers(HttpMethod.POST, "/examinations/delete/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers("/examinations/add").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers("/examinations/edit/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers("/examinations/**").hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
+
                         .requestMatchers(HttpMethod.POST, "/diagnoses/delete/**").hasRole("ADMIN")
                         .requestMatchers("/diagnoses/**").hasAnyRole("ADMIN", "DOCTOR")
 

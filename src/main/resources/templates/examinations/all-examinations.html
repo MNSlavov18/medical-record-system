@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Examinations</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Examinations</h1>
+
+    <div class="error" th:if="${pageError}" th:text="${pageError}"></div>
+
+    <div class="actions" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
+        <a class="btn btn-primary" href="/examinations/add">Add Examination</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Doctor</th>
+            <th>Patient</th>
+            <th>Diagnosis</th>
+            <th>Price</th>
+            <th>Payment</th>
+            <th sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="examination : ${examinations}">
+            <td th:text="${examination.id}"></td>
+            <td th:text="${examination.examinationDate}"></td>
+            <td th:text="${examination.doctorName}"></td>
+            <td th:text="${examination.patientName}"></td>
+            <td th:text="${examination.diagnosisName}"></td>
+            <td th:text="${examination.price}"></td>
+            <td>
+                <span th:if="${examination.paymentSource.name() == 'NHIF'}"
+                      class="badge badge-success">
+                    NHIF
+                </span>
+
+                <span th:if="${examination.paymentSource.name() == 'PATIENT'}"
+                      class="badge badge-danger">
+                    Patient
+                </span>
+            </td>
+
+            <td sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
+                <a class="btn btn-warning"
+                   th:href="@{/examinations/edit/{id}(id=${examination.id})}">
+                    Edit
+                </a>
+
+                <form th:action="@{/examinations/delete/{id}(id=${examination.id})}"
+                      method="post"
+                      style="display:inline;">
+                    <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

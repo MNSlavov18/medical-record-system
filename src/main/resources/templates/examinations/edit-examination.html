@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Examination</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Edit Examination</h1>
+
+    <div class="info-box">
+        Payment source will be recalculated automatically after saving.
+    </div>
+
+    <div class="error" th:if="${formError}" th:text="${formError}"></div>
+
+    <form th:action="@{/examinations/edit/{id}(id=${examinationId})}" th:object="${examination}" method="post">
+
+        <div class="form-group">
+            <label for="examinationDate">Date</label>
+            <input id="examinationDate" type="date" th:field="*{examinationDate}">
+            <div class="error"
+                 th:if="${#fields.hasErrors('examinationDate')}"
+                 th:errors="*{examinationDate}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="doctorId">Doctor</label>
+            <select id="doctorId" th:field="*{doctorId}">
+                <option value="">-- Select doctor --</option>
+                <option th:each="doctor : ${doctors}"
+                        th:value="${doctor.id}"
+                        th:text="${doctor.fullName + ' - ' + doctor.specialtyName}">
+                </option>
+            </select>
+            <div class="error" th:if="${#fields.hasErrors('doctorId')}" th:errors="*{doctorId}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="patientId">Patient</label>
+            <select id="patientId" th:field="*{patientId}">
+                <option value="">-- Select patient --</option>
+                <option th:each="patient : ${patients}"
+                        th:value="${patient.id}"
+                        th:text="${patient.fullName + ' (' + patient.egn + ')'}">
+                </option>
+            </select>
+            <div class="error" th:if="${#fields.hasErrors('patientId')}" th:errors="*{patientId}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="diagnosisId">Diagnosis</label>
+            <select id="diagnosisId" th:field="*{diagnosisId}">
+                <option value="">-- Select diagnosis --</option>
+                <option th:each="diagnosis : ${diagnoses}"
+                        th:value="${diagnosis.id}"
+                        th:text="${diagnosis.code + ' - ' + diagnosis.name}">
+                </option>
+            </select>
+            <div class="error" th:if="${#fields.hasErrors('diagnosisId')}" th:errors="*{diagnosisId}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input id="price" type="number" step="0.01" th:field="*{price}">
+            <div class="error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Update</button>
+        <a class="btn btn-secondary" href="/examinations">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>
