@@ -258,3 +258,21 @@ select {
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.stat-card h3 {
+    margin-top: 0;
+}

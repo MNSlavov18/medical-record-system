@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistics</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Statistics and Reports</h1>
+
+    <div class="info-box">
+        This page contains medical and administrative reports for the system.
+    </div>
+
+    <h2>General Medical Statistics</h2>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Most Common Diagnosis</h3>
+
+            <div th:if="${mostCommonDiagnosis != null}">
+                <p>
+                    <strong th:text="${mostCommonDiagnosis.diagnosisName}"></strong>
+                </p>
+                <p>
+                    Count:
+                    <span th:text="${mostCommonDiagnosis.count}"></span>
+                </p>
+            </div>
+
+            <p class="error" th:if="${mostCommonDiagnosisError}" th:text="${mostCommonDiagnosisError}"></p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Month With Most Sick Leaves</h3>
+
+            <div th:if="${monthWithMostSickLeaves != null}">
+                <p>
+                    <strong>
+                        <span th:text="${monthWithMostSickLeaves.month}"></span>
+                        /
+                        <span th:text="${monthWithMostSickLeaves.year}"></span>
+                    </strong>
+                </p>
+                <p>
+                    Sick leaves:
+                    <span th:text="${monthWithMostSickLeaves.sickLeaveCount}"></span>
+                </p>
+            </div>
+
+            <p class="error"
+               th:if="${monthWithMostSickLeavesError}"
+               th:text="${monthWithMostSickLeavesError}">
+            </p>
+        </div>
+
+        <div class="stat-card" sec:authorize="hasRole('ADMIN')">
+            <h3>Total Patient-Paid Value</h3>
+
+            <p>
+                <strong th:text="${totalPatientPaid}"></strong>
+            </p>
+        </div>
+    </div>
+
+    <h2 style="margin-top: 35px;">Visits By Doctor</h2>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Doctor</th>
+            <th>Visits</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="row : ${visitCounts}">
+            <td th:text="${row.doctorName}"></td>
+            <td th:text="${row.visitCount}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 35px;">Doctors With Most Sick Leaves</h2>
+
+    <div class="empty-message" th:if="${doctorsWithMostSickLeavesError}" th:text="${doctorsWithMostSickLeavesError}"></div>
+
+    <table th:if="${doctorsWithMostSickLeaves != null}">
+        <thead>
+        <tr>
+            <th>Doctor</th>
+            <th>Sick Leaves</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="row : ${doctorsWithMostSickLeaves}">
+            <td th:text="${row.doctorName}"></td>
+            <td th:text="${row.sickLeaveCount}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div sec:authorize="hasRole('ADMIN')">
+        <h2 style="margin-top: 35px;">Patient Count By Personal Doctor</h2>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Doctor</th>
+                <th>Patients</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="row : ${patientCounts}">
+                <td th:text="${row.doctorName}"></td>
+                <td th:text="${row.patientCount}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 style="margin-top: 35px;">Patients By Diagnosis</h2>
+
+    <form method="get" th:action="@{/statistics}" class="search-row">
+        <div class="form-group">
+            <label for="diagnosisId">Diagnosis</label>
+            <select id="diagnosisId" name="diagnosisId">
+                <option value="">-- Select diagnosis --</option>
+                <option th:each="diagnosis : ${diagnoses}"
+                        th:value="${diagnosis.id}"
+                        th:selected="${selectedDiagnosisId != null && selectedDiagnosisId == diagnosis.id}"
+                        th:text="${diagnosis.code + ' - ' + diagnosis.name}">
+                </option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+
+    <table th:if="${patientsByDiagnosis != null}">
+        <thead>
+        <tr>
+            <th>Patient</th>
+            <th>EGN</th>
+            <th>Personal Doctor</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="patient : ${patientsByDiagnosis}">
+            <td th:text="${patient.fullName}"></td>
+            <td th:text="${patient.egn}"></td>
+            <td th:text="${patient.personalDoctorName}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 35px;">Patients By Personal Doctor</h2>
+
+    <form method="get" th:action="@{/statistics}" class="search-row">
+        <div class="form-group">
+            <label for="personalDoctorId">Personal Doctor</label>
+            <select id="personalDoctorId" name="personalDoctorId">
+                <option value="">-- Select doctor --</option>
+                <option th:each="doctor : ${doctors}"
+                        th:value="${doctor.id}"
+                        th:selected="${selectedPersonalDoctorId != null && selectedPersonalDoctorId == doctor.id}"
+                        th:text="${doctor.fullName + ' - ' + doctor.specialtyName}">
+                </option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+
+    <table th:if="${patientsByPersonalDoctor != null}">
+        <thead>
+        <tr>
+            <th>Patient</th>
+            <th>EGN</th>
+            <th>User</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="patient : ${patientsByPersonalDoctor}">
+            <td th:text="${patient.fullName}"></td>
+            <td th:text="${patient.egn}"></td>
+            <td th:text="${patient.username}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 35px;">Patient Visit History</h2>
+
+    <form method="get" th:action="@{/statistics}" class="search-row">
+        <div class="form-group">
+            <label for="patientHistoryId">Patient</label>
+            <select id="patientHistoryId" name="patientHistoryId">
+                <option value="">-- Select patient --</option>
+                <option th:each="patient : ${patients}"
+                        th:value="${patient.id}"
+                        th:selected="${selectedPatientHistoryId != null && selectedPatientHistoryId == patient.id}"
+                        th:text="${patient.fullName + ' (' + patient.egn + ')'}">
+                </option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Show History</button>
+    </form>
+
+    <table th:if="${patientHistory != null}">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Doctor</th>
+            <th>Diagnosis</th>
+            <th>Price</th>
+            <th>Payment</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="examination : ${patientHistory}">
+            <td th:text="${examination.examinationDate}"></td>
+            <td th:text="${examination.doctorName}"></td>
+            <td th:text="${examination.diagnosisName}"></td>
+            <td th:text="${examination.price}"></td>
+            <td th:text="${examination.paymentSource}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 35px;">Search Examinations</h2>
+
+    <form method="get" th:action="@{/statistics}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="searchDoctorId">Doctor</label>
+                <select id="searchDoctorId" name="searchDoctorId">
+                    <option value="">-- Any doctor --</option>
+                    <option th:each="doctor : ${doctors}"
+                            th:value="${doctor.id}"
+                            th:selected="${selectedSearchDoctorId != null && selectedSearchDoctorId == doctor.id}"
+                            th:text="${doctor.fullName + ' - ' + doctor.specialtyName}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="startDate">Start Date</label>
+                <input id="startDate" type="date" name="startDate" th:value="${selectedStartDate}">
+            </div>
+
+            <div class="form-group">
+                <label for="endDate">End Date</label>
+                <input id="endDate" type="date" name="endDate" th:value="${selectedEndDate}">
+            </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Search Examinations</button>
+    </form>
+
+    <div class="error" th:if="${searchError}" th:text="${searchError}"></div>
+
+    <table th:if="${searchResults != null}">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Doctor</th>
+            <th>Patient</th>
+            <th>Diagnosis</th>
+            <th>Price</th>
+            <th>Payment</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="examination : ${searchResults}">
+            <td th:text="${examination.examinationDate}"></td>
+            <td th:text="${examination.doctorName}"></td>
+            <td th:text="${examination.patientName}"></td>
+            <td th:text="${examination.diagnosisName}"></td>
+            <td th:text="${examination.price}"></td>
+            <td th:text="${examination.paymentSource}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div sec:authorize="hasRole('ADMIN')">
+        <h2 style="margin-top: 35px;">Patient-Paid Value By Doctor</h2>
+
+        <form method="get" th:action="@{/statistics}" class="search-row">
+            <div class="form-group">
+                <label for="revenueDoctorId">Doctor</label>
+                <select id="revenueDoctorId" name="revenueDoctorId">
+                    <option value="">-- Select doctor --</option>
+                    <option th:each="doctor : ${doctors}"
+                            th:value="${doctor.id}"
+                            th:selected="${selectedRevenueDoctorId != null && selectedRevenueDoctorId == doctor.id}"
+                            th:text="${doctor.fullName + ' - ' + doctor.specialtyName}">
+                    </option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Calculate</button>
+        </form>
+
+        <div class="info-box" th:if="${doctorRevenue != null}">
+            <strong th:text="${doctorRevenue.doctorName}"></strong>
+            patient-paid total:
+            <strong th:text="${doctorRevenue.totalAmount}"></strong>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
