@@ -28,6 +28,7 @@
             <th>EGN</th>
             <th>User</th>
             <th>Personal Doctor</th>
+            <th>History</th>
             <th sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Actions</th>
         </tr>
         </thead>
@@ -39,8 +40,19 @@
             <td th:text="${patient.egn}"></td>
             <td th:text="${patient.username}"></td>
             <td th:text="${patient.personalDoctorName}"></td>
+
+            <td>
+                <a class="btn btn-secondary"
+                   th:href="@{/patients/{id}/history(id=${patient.id})}">
+                    History
+                </a>
+            </td>
+
             <td sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
-                <a class="btn btn-warning" th:href="@{/patients/edit/{id}(id=${patient.id})}">Edit</a>
+                <a class="btn btn-warning"
+                   th:href="@{/patients/edit/{id}(id=${patient.id})}">
+                    Edit
+                </a>
 
                 <form sec:authorize="hasRole('ADMIN')"
                       th:action="@{/patients/delete/{id}(id=${patient.id})}"

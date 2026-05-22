@@ -13,6 +13,8 @@ public interface TreatmentService {
 
     TreatmentDTO getTreatmentByExamination(Long examinationId);
 
+    List<TreatmentDTO> getTreatmentsByPatient(Long patientId);
+
     TreatmentDTO createTreatment(TreatmentRequestDTO requestDTO);
 
     TreatmentDTO updateTreatment(Long id, TreatmentRequestDTO requestDTO);

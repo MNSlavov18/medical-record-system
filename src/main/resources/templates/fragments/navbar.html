@@ -14,6 +14,8 @@
 
     <a href="/examinations" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')">Examinations</a>
 
+    <a href="/treatments" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')">Treatments</a>
+
     <a href="/doctors" sec:authorize="hasRole('ADMIN')">Doctors</a>
 
     <a href="/diagnoses" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Diagnoses</a>

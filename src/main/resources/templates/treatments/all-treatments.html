@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Treatments</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Treatments</h1>
+
+    <div class="error" th:if="${pageError}" th:text="${pageError}"></div>
+
+    <div class="actions" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
+        <a class="btn btn-primary" href="/treatments/add">Add Treatment</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Examination Date</th>
+            <th>Description</th>
+            <th>Medication</th>
+            <th>Start</th>
+            <th>End</th>
+            <th sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="treatment : ${treatments}">
+            <td th:text="${treatment.id}"></td>
+            <td th:text="${treatment.patientName}"></td>
+            <td th:text="${treatment.doctorName}"></td>
+            <td th:text="${treatment.examinationDate}"></td>
+            <td th:text="${treatment.description}"></td>
+            <td th:text="${treatment.prescribedMedication}"></td>
+            <td th:text="${treatment.startDate}"></td>
+            <td th:text="${treatment.endDate}"></td>
+
+            <td sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">
+                <div th:if="${isAdmin or (currentDoctorId != null and treatment.doctorId == currentDoctorId)}">
+                    <a class="btn btn-warning"
+                       th:href="@{/treatments/edit/{id}(id=${treatment.id})}">
+                        Edit
+                    </a>
+
+                    <form th:action="@{/treatments/delete/{id}(id=${treatment.id})}"
+                          method="post"
+                          style="display:inline;">
+                        <button class="btn btn-danger" type="submit">Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

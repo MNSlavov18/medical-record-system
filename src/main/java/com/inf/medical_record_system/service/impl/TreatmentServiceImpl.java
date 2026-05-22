@@ -35,6 +35,23 @@ public class TreatmentServiceImpl implements TreatmentService {
 
     @Override
     public List<TreatmentDTO> getAllTreatments() {
+        if (currentUserService.isAdmin()) {
+            return treatmentRepository.findAll()
+                    .stream()
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
+        if (currentUserService.isDoctor()) {
+            Long currentDoctorId = currentUserService.getCurrentDoctorId();
+
+            return treatmentRepository.findAll()
+                    .stream()
+                    .filter(treatment -> treatment.getExamination().getDoctor().getId().equals(currentDoctorId))
+                    .map(this::mapToDTO)
+                    .toList();
+        }
+
         if (currentUserService.isPatient()) {
             Long currentPatientId = currentUserService.getCurrentPatientId();
 
@@ -45,10 +62,7 @@ public class TreatmentServiceImpl implements TreatmentService {
                     .toList();
         }
 
-        return treatmentRepository.findAll()
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+        throw new InvalidOperationException("You do not have permission to view treatments");
     }
 
     @Override
@@ -69,6 +83,22 @@ public class TreatmentServiceImpl implements TreatmentService {
         validateCanReadTreatment(treatment);
 
         return mapToDTO(treatment);
+    }
+
+    @Override
+    public List<TreatmentDTO> getTreatmentsByPatient(Long patientId) {
+        if (currentUserService.isPatient()) {
+            Long currentPatientId = currentUserService.getCurrentPatientId();
+
+            if (!currentPatientId.equals(patientId)) {
+                throw new InvalidOperationException("Patients can view only their own treatments");
+            }
+        }
+
+        return treatmentRepository.findByExaminationPatientId(patientId)
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
     @Override
@@ -126,6 +156,13 @@ public class TreatmentServiceImpl implements TreatmentService {
     public void deleteTreatment(Long id) {
         Treatment treatment = findTreatmentById(id);
         validateCanModifyTreatment(treatment);
+
+        Examination examination = treatment.getExamination();
+
+        if (examination != null) {
+            examination.setTreatment(null);
+            treatment.setExamination(null);
+        }
 
         treatmentRepository.delete(treatment);
     }

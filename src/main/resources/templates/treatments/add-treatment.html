@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Treatment</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Add Treatment</h1>
+
+    <div class="info-box">
+        A treatment is connected to exactly one examination.
+    </div>
+
+    <div class="error" th:if="${formError}" th:text="${formError}"></div>
+
+    <form th:action="@{/treatments/add}" th:object="${treatment}" method="post">
+
+        <div class="form-group">
+            <label for="examinationId">Examination</label>
+            <select id="examinationId" th:field="*{examinationId}">
+                <option value="">-- Select examination --</option>
+                <option th:each="examination : ${examinations}"
+                        th:value="${examination.id}"
+                        th:text="${'#' + examination.id + ' | ' + examination.examinationDate + ' | ' + examination.patientName + ' | ' + examination.doctorName + ' | ' + examination.diagnosisName}">
+                </option>
+            </select>
+            <div class="error"
+                 th:if="${#fields.hasErrors('examinationId')}"
+                 th:errors="*{examinationId}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description"
+                      rows="4"
+                      th:field="*{description}"
+                      placeholder="Example: Rest, hydration and monitoring of symptoms."></textarea>
+            <div class="error"
+                 th:if="${#fields.hasErrors('description')}"
+                 th:errors="*{description}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="prescribedMedication">Prescribed Medication</label>
+            <textarea id="prescribedMedication"
+                      rows="3"
+                      th:field="*{prescribedMedication}"
+                      placeholder="Example: Ibuprofen 400mg if needed"></textarea>
+            <div class="error"
+                 th:if="${#fields.hasErrors('prescribedMedication')}"
+                 th:errors="*{prescribedMedication}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="startDate">Start Date</label>
+                <input id="startDate" type="date" th:field="*{startDate}">
+            </div>
+
+            <div class="form-group">
+                <label for="endDate">End Date</label>
+                <input id="endDate" type="date" th:field="*{endDate}">
+            </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-secondary" href="/treatments">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Patient History</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Patient History</h1>
+
+    <div class="info-box">
+        <strong>Patient:</strong>
+        <span th:text="${patient.fullName}"></span>
+
+        <br>
+
+        <strong>EGN:</strong>
+        <span th:text="${patient.egn}"></span>
+
+        <br>
+
+        <strong>Personal doctor:</strong>
+        <span th:text="${patient.personalDoctorName}"></span>
+    </div>
+
+    <div class="actions">
+        <a class="btn btn-secondary" href="/patients">Back to Patients</a>
+    </div>
+
+    <h2>Examinations</h2>
+
+    <div class="empty-message" th:if="${#lists.isEmpty(examinations)}">
+        No examinations found for this patient.
+    </div>
+
+    <table th:if="${!#lists.isEmpty(examinations)}">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Doctor</th>
+            <th>Diagnosis</th>
+            <th>Price</th>
+            <th>Payment</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="examination : ${examinations}">
+            <td th:text="${examination.id}"></td>
+            <td th:text="${examination.examinationDate}"></td>
+            <td th:text="${examination.doctorName}"></td>
+            <td th:text="${examination.diagnosisName}"></td>
+            <td th:text="${examination.price}"></td>
+            <td>
+                <span th:if="${examination.paymentSource.name() == 'NHIF'}"
+                      class="badge badge-success">
+                    NHIF
+                </span>
+
+                <span th:if="${examination.paymentSource.name() == 'PATIENT'}"
+                      class="badge badge-danger">
+                    Patient
+                </span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 35px;">Treatments</h2>
+
+    <div class="empty-message" th:if="${#lists.isEmpty(treatments)}">
+        No treatments found for this patient.
+    </div>
+
+    <table th:if="${!#lists.isEmpty(treatments)}">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Doctor</th>
+            <th>Examination Date</th>
+            <th>Description</th>
+            <th>Medication</th>
+            <th>Start</th>
+            <th>End</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="treatment : ${treatments}">
+            <td th:text="${treatment.id}"></td>
+            <td th:text="${treatment.doctorName}"></td>
+            <td th:text="${treatment.examinationDate}"></td>
+            <td th:text="${treatment.description}"></td>
+            <td th:text="${treatment.prescribedMedication}"></td>
+            <td th:text="${treatment.startDate}"></td>
+            <td th:text="${treatment.endDate}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 style="margin-top: 35px;">Sick Leaves</h2>
+
+    <div class="empty-message" th:if="${#lists.isEmpty(sickLeaves)}">
+        No sick leaves found for this patient.
+    </div>
+
+    <table th:if="${!#lists.isEmpty(sickLeaves)}">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Doctor</th>
+            <th>Examination Date</th>
+            <th>Start Date</th>
+            <th>Number of Days</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="sickLeave : ${sickLeaves}">
+            <td th:text="${sickLeave.id}"></td>
+            <td th:text="${sickLeave.doctorName}"></td>
+            <td th:text="${sickLeave.examinationDate}"></td>
+            <td th:text="${sickLeave.startDate}"></td>
+            <td th:text="${sickLeave.numberOfDays}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
