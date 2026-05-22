@@ -157,3 +157,60 @@ select {
     border-radius: 5px;
     margin-bottom: 15px;
 }
+
+.search-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    margin-bottom: 25px;
+}
+
+.search-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.doctor-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.doctor-option {
+    display: block;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    background-color: #f9fafb;
+    transition: 0.15s ease;
+}
+
+.doctor-option:hover {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.doctor-option input {
+    width: auto;
+    margin-right: 8px;
+}
+
+.doctor-name {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.doctor-meta {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.empty-message {
+    padding: 12px;
+    background-color: #fef3c7;
+    border-radius: 6px;
+    color: #92400e;
+    margin-top: 10px;
+}

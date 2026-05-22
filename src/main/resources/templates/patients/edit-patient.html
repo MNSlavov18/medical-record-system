@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Patient</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+    <h1>Edit Patient</h1>
+
+    <div class="error" th:if="${formError}" th:text="${formError}"></div>
+
+    <form method="get" th:action="@{/patients/edit/{id}(id=${patientId})}" class="search-row">
+        <div class="form-group">
+            <label for="doctorName">Search personal doctor by name</label>
+            <input id="doctorName"
+                   type="text"
+                   name="doctorName"
+                   th:value="${doctorName}"
+                   placeholder="Example: Ivan, Georgi, Petrov">
+        </div>
+
+        <button class="btn btn-secondary" type="submit">Search</button>
+        <a class="btn btn-secondary" th:href="@{/patients/edit/{id}(id=${patientId})}">Clear</a>
+    </form>
+
+    <form th:action="@{/patients/edit/{id}(id=${patientId})}" th:object="${patient}" method="post">
+        <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input id="fullName" type="text" th:field="*{fullName}">
+            <div class="error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="egn">EGN</label>
+            <input id="egn" type="text" th:field="*{egn}">
+            <div class="error" th:if="${#fields.hasErrors('egn')}" th:errors="*{egn}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="userId">User Account</label>
+            <select id="userId" th:field="*{userId}">
+                <option value="">-- Select patient user --</option>
+                <option th:each="user : ${patientUsers}"
+                        th:value="${user.id}"
+                        th:text="${user.username + ' (' + user.email + ')'}">
+                </option>
+            </select>
+            <div class="error" th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Personal Doctor</label>
+
+            <div class="empty-message" th:if="${#lists.isEmpty(personalDoctors)}">
+                No personal doctors found. Try another search.
+            </div>
+
+            <div class="doctor-card-grid" th:if="${!#lists.isEmpty(personalDoctors)}">
+                <label class="doctor-option" th:each="doctor : ${personalDoctors}">
+                    <input type="radio" th:field="*{personalDoctorId}" th:value="${doctor.id}">
+
+                    <span class="doctor-name" th:text="${doctor.fullName}"></span>
+
+                    <div class="doctor-meta">
+                        <span th:text="${doctor.specialtyName}"></span>
+                        <span> · </span>
+                        <span th:text="${doctor.uniqueIdentificationNumber}"></span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="error"
+                 th:if="${#fields.hasErrors('personalDoctorId')}"
+                 th:errors="*{personalDoctorId}">
+            </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Update</button>
+        <a class="btn btn-secondary" href="/patients">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>

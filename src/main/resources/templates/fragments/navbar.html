@@ -8,11 +8,13 @@
 <nav class="navbar" th:fragment="navbar">
     <a href="/home">Home</a>
 
-    <a href="/specialties" sec:authorize="hasRole('ADMIN')">Specialties</a>
+    <a href="/patients" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR', 'PATIENT')">Patients</a>
+
+    <a href="/doctors" sec:authorize="hasRole('ADMIN')">Doctors</a>
 
     <a href="/diagnoses" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Diagnoses</a>
 
-    <a href="/doctors" sec:authorize="hasRole('ADMIN')">Doctors</a>
+    <a href="/specialties" sec:authorize="hasRole('ADMIN')">Specialties</a>
 
     <a href="/swagger-ui/index.html" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Swagger API</a>
 

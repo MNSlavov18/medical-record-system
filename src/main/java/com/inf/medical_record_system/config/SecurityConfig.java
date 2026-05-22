@@ -77,6 +77,12 @@ public class SecurityConfig {
                         // Thymeleaf pages
                         .requestMatchers("/specialties/**").hasRole("ADMIN")
                         .requestMatchers("/doctors/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/patients/delete/**").hasRole("ADMIN")
+                        .requestMatchers("/patients/add").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers("/patients/edit/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers("/patients/**").hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
+
                         .requestMatchers(HttpMethod.POST, "/diagnoses/delete/**").hasRole("ADMIN")
                         .requestMatchers("/diagnoses/**").hasAnyRole("ADMIN", "DOCTOR")
 
