@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDate;
@@ -33,13 +33,13 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest(classes = HealthInsuranceStatusServiceImpl.class)
 class HealthInsuranceStatusServiceImplTest {
 
-    @MockBean
+    @MockitoBean
     private HealthInsuranceStatusRepository healthInsuranceStatusRepository;
 
-    @MockBean
+    @MockitoBean
     private PatientRepository patientRepository;
 
-    @MockBean
+    @MockitoBean
     private CurrentUserService currentUserService;
 
     @Autowired
