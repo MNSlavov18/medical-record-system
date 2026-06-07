@@ -26,6 +26,8 @@
 
     <a href="/statistics" sec:authorize="hasAnyRole('ADMIN', 'DOCTOR')">Statistics</a>
 
+    <a sec:authorize="hasRole('ADMIN')" href="/users">Users</a>
+
     <a href="/swagger-ui/index.html" sec:authorize="hasAnyRole('ADMIN')">Swagger API</a>
 
     <span style="margin-left:auto; color:white;" sec:authorize="isAuthenticated()">

@@ -104,6 +104,7 @@ public class SecurityConfig {
                         .requestMatchers("/sick-leaves/edit/**").hasAnyRole("ADMIN", "DOCTOR")
                         .requestMatchers("/sick-leaves/**").hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
 
+                        .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/statistics/**").hasAnyRole("ADMIN", "DOCTOR")
 
                         .requestMatchers(HttpMethod.POST, "/diagnoses/delete/**").hasRole("ADMIN")
